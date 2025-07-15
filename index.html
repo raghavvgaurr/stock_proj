@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stock Predictor</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f7f7f7; }
+    h2 { color: #333; }
+    .summary { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+
+<h2>📈 Stock Price Prediction Dashboard</h2>
+<div class="summary" id="summary"></div>
+<div id="chart"></div>
+
+<script src="data.js"></script>
+<script>
+  // Show summary
+  document.getElementById("summary").innerHTML = `
+    <b>Current Price:</b> ₹${data.current_price}<br>
+    <b>Predicted Price:</b> ₹${data.predicted_price}<br>
+    <b>Trend:</b> ${data.trend}<br>
+    <b>Recommendation:</b> ${data.recommendation}<br>
+    <b>Expected Profit:</b> ₹${data.expected_profit.toFixed(2)}
+  `;
+
+  // Plot
+  Plotly.newPlot('chart', [
+    {
+      x: data.dates,
+      y: data.actual,
+      mode: 'lines+markers',
+      name: 'Actual Price',
+      line: { color: 'blue' }
+    },
+    {
+      x: data.dates,
+      y: data.predicted,
+      mode: 'lines+markers',
+      name: 'Predicted Price',
+      line: { color: 'orange' }
+    }
+  ], {
+    title: '📊 Actual vs Predicted Stock Prices',
+    xaxis: { title: 'Date' },
+    yaxis: { title: 'Price (₹)' },
+    legend: { orientation: 'h' }
+  });
+</script>
+
+</body>
+</html>
