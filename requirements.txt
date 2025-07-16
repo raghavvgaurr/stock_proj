@@ -1,6 +1,5 @@
-streamlit
+flask
 yfinance
 pandas
 numpy
 scikit-learn
-plotly
