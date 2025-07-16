@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>📈 AAPL Stock Predictor</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f4f4;
+        }
+        h2 {
+            color: #333;
+        }
+        .info-box {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 600px;
+        }
+        .chart-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>📊 Stock Price Prediction for AAPL</h2>
+
+    <div class="info-box">
+        <p><strong>📍 Current Price:</strong> ₹{{ current_price }}</p>
+        <p><strong>🎯 Predicted Price:</strong> ₹{{ predicted_price }}</p>
+        <p><strong>📉 Trend:</strong> {{ trend }}</p>
+        <p><strong>🧠 Recommendation:</strong> {{ recommendation }}</p>
+        <p><strong>💰 Expected Profit:</strong> ₹{{ expected_return }}</p>
+        <p><strong>📏 RMSE:</strong> {{ rmse }}</p>
+        <p><strong>📏 MAE:</strong> {{ mae }}</p>
+    </div>
+
+    <div class="chart-container">
+        {{ chart | safe }}
+    </div>
+
+</body>
+</html>
