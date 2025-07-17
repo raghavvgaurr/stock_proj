@@ -111,5 +111,9 @@ def home():
                            expected_return=f"{expected_return:.2f}",
                            rmse=f"{rmse:.2f}",
                            mae=f"{mae:.2f}")
+import os
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000, debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
