@@ -1,110 +1,119 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template
 import yfinance as yf
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import plotly.graph_objects as go
-from sklearn.preprocessing import MinMaxScaler
-from keras.models import Sequential
-from keras.layers import Dense, LSTM
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from datetime import datetime, timedelta
+import plotly.graph_objs as go
 import plotly.io as pio
 
 app = Flask(__name__)
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 def home():
-    stock = 'AAPL'
-    start_date = '2020-01-01'
-    end_date = '2024-01-01'
+    # Step 1: Download stock data
+    df = yf.download('AAPL', start='2020-01-01', end='2024-01-01')
+    df['MA10'] = df['Close'].rolling(window=10).mean()
 
-    if request.method == 'POST':
-        stock = request.form['stock']
-        start_date = request.form['start_date']
-        end_date = request.form['end_date']
+    # Step 2: Feature Engineering
+    df['Close_lag1'] = df['Close'].shift(1)
+    df['Close_lag2'] = df['Close'].shift(2)
+    df = df.dropna()
 
-    df = yf.download(stock, start=start_date, end=end_date)
+    # Step 3: Define Features and Target
+    X = df[['Close_lag1', 'Close_lag2', 'MA10']]
+    y = df['Close']
 
-    data = df.filter(['Close'])
-    dataset = data.values
-    training_data_len = int(np.ceil(len(dataset) * 0.8))
+    # Step 4: Train-Test Split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle=False)
 
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    scaled_data = scaler.fit_transform(dataset)
+    # Step 5: Train Linear Regression Model
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    predicted = model.predict(X_test)
 
-    train_data = scaled_data[0:int(training_data_len), :]
-    x_train, y_train = [], []
+    # Step 6: Evaluation
+    rmse = np.sqrt(mean_squared_error(y_test, predicted))
+    mae = mean_absolute_error(y_test, predicted)
 
-    for i in range(60, len(train_data)):
-        x_train.append(train_data[i-60:i, 0])
-        y_train.append(train_data[i, 0])
+    # Step 7: Buy/Sell Signals
+    signal_list = []
+    for i in range(len(predicted)):
+        if i == 0:
+            signal_list.append("Hold")
+        elif predicted[i] > predicted[i - 1]:
+            signal_list.append("Buy")
+        else:
+            signal_list.append("Sell")
 
-    x_train, y_train = np.array(x_train), np.array(y_train)
-    x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
+    # Step 8: Investment Info
+    latest_price = float(y_test.values[-1])
+    latest_predicted = float(predicted[-1])
+    trend = "↑ Upward" if latest_predicted > float(predicted[-2]) else "↓ Downward"
+    recommendation = "Buy ✅" if trend == "↑ Upward" else "Exit ❌"
+    investment = 10000
+    expected_return = (latest_predicted - latest_price) / latest_price * investment
 
-    model = Sequential()
-    model.add(LSTM(50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
-    model.add(LSTM(50, return_sequences=False))
-    model.add(Dense(25))
-    model.add(Dense(1))
-    model.compile(optimizer='adam', loss='mean_squared_error')
-    model.fit(x_train, y_train, batch_size=1, epochs=1)
+    # Step 9: Prepare DataFrame
+    returns = pd.DataFrame({
+        'Date': y_test.index,
+        'Actual Price': y_test.values.flatten(),
+        'Predicted Price': predicted.flatten(),
+        'Return (%)': ((predicted.flatten() - y_test.values.flatten()) / y_test.values.flatten()) * 100,
+        'Signal': signal_list
+    })
 
-    test_data = scaled_data[training_data_len - 60:, :]
-    x_test, y_test = [], dataset[training_data_len:, :]
-    for i in range(60, len(test_data)):
-        x_test.append(test_data[i-60:i, 0])
-
-    x_test = np.array(x_test)
-    x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
-    predictions = model.predict(x_test)
-    predictions = scaler.inverse_transform(predictions)
-
-    rmse = np.sqrt(mean_squared_error(y_test, predictions))
-    mae = mean_absolute_error(y_test, predictions)
-
-    # Future prediction
-    last_60_days = data[-60:].values
-    last_60_days_scaled = scaler.transform(last_60_days)
-    X_future = []
-    X_future.append(last_60_days_scaled)
-    X_future = np.array(X_future)
-    X_future = np.reshape(X_future, (X_future.shape[0], X_future.shape[1], 1))
-    predicted_price = model.predict(X_future)
-    predicted_price = scaler.inverse_transform(predicted_price)[0][0]
-
-    current_price = dataset[-1][0]
-    expected_return = predicted_price - current_price
-
-    trend = "Up" if predicted_price > current_price else "Down"
-    recommendation = "Buy" if trend == "Up" else "Sell"
-
-    # Plot using Plotly
-    train = data[:training_data_len]
-    valid = data[training_data_len:]
-    valid['Predictions'] = predictions
-
+    # Step 10: Plotly Chart
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=train.index, y=train['Close'], name='Train'))
-    fig.add_trace(go.Scatter(x=valid.index, y=valid['Close'], name='Actual'))
-    fig.add_trace(go.Scatter(x=valid.index, y=valid['Predictions'], name='Predicted'))
-    fig.update_layout(title='Stock Price Prediction', xaxis_title='Date', yaxis_title='Close Price')
+    fig.add_trace(go.Scatter(
+        x=returns['Date'],
+        y=returns['Actual Price'],
+        mode='lines+markers',
+        name='Actual Price',
+        marker=dict(color='blue'),
+        hovertemplate='Date: %{x}<br>Actual Price: ₹%{y:.2f}<extra></extra>'
+    ))
 
-    graph_html = pio.to_html(fig, full_html=False)
+    fig.add_trace(go.Scatter(
+        x=returns['Date'],
+        y=returns['Predicted Price'],
+        mode='lines+markers',
+        name='Predicted Price',
+        marker=dict(color='orange'),
+        customdata=np.stack((returns['Return (%)'], returns['Signal']), axis=-1),
+        hovertemplate=(
+            'Date: %{x}<br>'
+            'Predicted Price: ₹%{y:.2f}<br>'
+            'Return: %{customdata[0]:.2f}%<br>'
+            'Signal: %{customdata[1]}<extra></extra>'
+        )
+    ))
 
-    return render_template(
-        'index.html',
-        current_price=round(current_price, 2),
-        predicted_price=round(predicted_price, 2),
-        trend=trend,
-        recommendation=recommendation,
-        rmse=round(rmse, 2),
-        mae=round(mae, 2),
-        expected_return=round(expected_return, 2),
-        chart=graph_html
+    fig.update_layout(
+        title='📊 Interactive Stock Price Prediction',
+        xaxis_title='Date',
+        yaxis_title='Price (₹)',
+        hovermode='x unified',
+        template='plotly_white',
+        width=1000,
+        height=600
     )
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    chart_html = pio.to_html(fig, full_html=False)
+
+    return render_template("index.html",
+                           chart=chart_html,
+                           current_price=f"{latest_price:.2f}",
+                           predicted_price=f"{latest_predicted:.2f}",
+                           trend=trend,
+                           recommendation=recommendation,
+                           expected_return=f"{expected_return:.2f}",
+                           rmse=f"{rmse:.2f}",
+                           mae=f"{mae:.2f}")
+import os
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port
 
