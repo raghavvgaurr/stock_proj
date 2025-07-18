@@ -1,46 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>🔍 Stock Price Prediction App</title>
+    <meta charset="UTF-8">
+    <title>🔍 Stock Price Prediction</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .container {
+            margin-top: 60px;
+        }
+        .form-control, .btn, .list-group-item {
+            background-color: #1f1f1f;
+            color: #e0e0e0;
+            border: none;
+        }
+        .form-control::placeholder {
+            color: #aaa;
+        }
+        .btn-primary {
+            background-color: #6200ea;
+        }
+        .result-box {
+            background-color: #1e1e1e;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.1);
+        }
+        .chart-container {
+            margin-top: 40px;
+        }
+    </style>
 </head>
 <body>
-    <h1>🔍 Stock Price Prediction App</h1>
+    <div class="container text-center">
+        <h1 class="mb-4">🔍 Stock Price Prediction App</h1>
 
-    <form method="POST">
-        <label>Select a popular stock:</label>
-        <select name="popular_ticker">
-            <option value="">--Choose--</option>
-            <option value="AAPL">Apple (AAPL)</option>
-            <option value="TSLA">Tesla (TSLA)</option>
-            <option value="AMZN">Amazon (AMZN)</option>
-            <option value="MSFT">Microsoft (MSFT)</option>
-            <option value="GOOG">Google (GOOG)</option>
-            <option value="RELIANCE.NS">Reliance (NSE)</option>
-            <option value="TCS.NS">TCS (NSE)</option>
-        </select>
+        <form method="POST" class="d-flex justify-content-center mb-4">
+            <input type="text" name="ticker" list="tickers" class="form-control w-25" placeholder="e.g. AAPL, TSLA, AMZN" required>
+            <button type="submit" class="btn btn-primary ms-2">Predict</button>
+        </form>
 
-        <br><br>
-        <label>Or enter custom ticker:</label>
-        <input type="text" name="ticker" placeholder="e.g. NFLX, INFY.NS">
+        <datalist id="tickers">
+            <option value="AAPL"><option value="TSLA"><option value="AMZN"><option value="GOOGL">
+            <option value="MSFT"><option value="NFLX"><option value="META"><option value="NVDA">
+        </datalist>
 
-        <br><br>
-        <button type="submit">Predict</button>
-    </form>
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
 
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% endif %}
+        {% if ticker %}
+        <div class="result-box mx-auto w-75 text-start">
+            <h4><strong>📊 {{ ticker }} Prediction Result</strong></h4>
+            <p><strong>Current Price:</strong> ₹{{ current_price }}</p>
+            <p><strong>Predicted Price:</strong> ₹{{ predicted_price }}</p>
+            <p><strong>Trend:</strong> {{ trend }}</p>
+            <p><strong>Recommendation:</strong> {{ recommendation }}</p>
+            <p><strong>Expected Return:</strong> ₹{{ expected_return }}</p>
+            <p><strong>RMSE:</strong> {{ rmse }}</p>
+            <p><strong>MAE:</strong> {{ mae }}</p>
+        </div>
 
-    {% if chart %}
-        <h2>📊 Prediction Chart for {{ ticker }}</h2>
-        {{ chart|safe }}
-        <p>Current Price: ₹{{ current_price }}</p>
-        <p>Predicted Price: ₹{{ predicted_price }}</p>
-        <p>Trend: {{ trend }}</p>
-        <p>Recommendation: {{ recommendation }}</p>
-        <p>Expected Return: ₹{{ expected_return }}</p>
-        <p>RMSE: {{ rmse }}, MAE: {{ mae }}</p>
-    {% endif %}
+        <div class="chart-container">
+            {{ chart | safe }}
+        </div>
+        {% endif %}
+    </div>
 </body>
 </html>
+
 
