@@ -1,47 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>📈 Stock Predictor</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>🔍 Stock Price Prediction App</title>
 </head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <h1 class="text-center mb-4">🔍 Stock Price Prediction App</h1>
+<body>
+    <h1>🔍 Stock Price Prediction App</h1>
 
-        <form method="POST" class="mb-4">
-            <div class="input-group">
-                <input type="text" class="form-control" name="ticker" placeholder="Enter Company Ticker (e.g., AAPL)" required>
-                <button class="btn btn-primary" type="submit">Predict</button>
-            </div>
-        </form>
+    <form method="POST">
+        <label>Select a popular stock:</label>
+        <select name="popular_ticker">
+            <option value="">--Choose--</option>
+            <option value="AAPL">Apple (AAPL)</option>
+            <option value="TSLA">Tesla (TSLA)</option>
+            <option value="AMZN">Amazon (AMZN)</option>
+            <option value="MSFT">Microsoft (MSFT)</option>
+            <option value="GOOG">Google (GOOG)</option>
+            <option value="RELIANCE.NS">Reliance (NSE)</option>
+            <option value="TCS.NS">TCS (NSE)</option>
+        </select>
 
-        {% if error %}
-            <div class="alert alert-danger">{{ error }}</div>
-        {% endif %}
+        <br><br>
+        <label>Or enter custom ticker:</label>
+        <input type="text" name="ticker" placeholder="e.g. NFLX, INFY.NS">
 
-        {% if chart %}
-            <div class="card shadow p-4 mb-4">
-                <h4>📊 Chart</h4>
-                {{ chart | safe }}
-            </div>
+        <br><br>
+        <button type="submit">Predict</button>
+    </form>
 
-            <div class="row">
-                <div class="col-md-6">
-                    <ul class="list-group">
-                        <li class="list-group-item">📌 Ticker: <strong>{{ ticker }}</strong></li>
-                        <li class="list-group-item">📉 Current Price: ₹<strong>{{ current_price }}</strong></li>
-                        <li class="list-group-item">📈 Predicted Price: ₹<strong>{{ predicted_price }}</strong></li>
-                        <li class="list-group-item">📊 Trend: <strong>{{ trend }}</strong></li>
-                        <li class="list-group-item">💼 Recommendation: <strong>{{ recommendation }}</strong></li>
-                        <li class="list-group-item">💸 Expected Return: ₹<strong>{{ expected_return }}</strong></li>
-                        <li class="list-group-item">📏 RMSE: <strong>{{ rmse }}</strong></li>
-                        <li class="list-group-item">📐 MAE: <strong>{{ mae }}</strong></li>
-                    </ul>
-                </div>
-            </div>
-        {% endif %}
-    </div>
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    {% if chart %}
+        <h2>📊 Prediction Chart for {{ ticker }}</h2>
+        {{ chart|safe }}
+        <p>Current Price: ₹{{ current_price }}</p>
+        <p>Predicted Price: ₹{{ predicted_price }}</p>
+        <p>Trend: {{ trend }}</p>
+        <p>Recommendation: {{ recommendation }}</p>
+        <p>Expected Return: ₹{{ expected_return }}</p>
+        <p>RMSE: {{ rmse }}, MAE: {{ mae }}</p>
+    {% endif %}
 </body>
 </html>
 
